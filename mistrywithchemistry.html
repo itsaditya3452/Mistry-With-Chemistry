@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemistry Learning Game</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right, #6dd5ed, #2193b0);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .game-container {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            min-height: 700px;
+        }
+        .header {
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.875rem; /* text-3xl */
+            border-bottom: 4px solid #388E3C;
+        }
+        .content-area {
+            flex-grow: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .class-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+            width: 100%;
+            max-width: 600px;
+        }
+        .class-button, .game-button, .quiz-option, .chatbot-send-button {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            font-weight: 600;
+            border-radius: 0.75rem; /* rounded-lg */
+            padding: 0.75rem 1.25rem; /* py-3 px-5 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .class-button:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .quiz-option:hover {
+            background-color: #e0f7fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .quiz-option.selected {
+            border: 3px solid #3b82f6;
+            background-color: #dbeafe;
+        }
+        .quiz-option.correct {
+            background-color: #dcfce7; /* green-100 */
+            border-color: #22c55e; /* green-500 */
+            color: #16a34a; /* green-600 */
+        }
+        .quiz-option.incorrect {
+            background-color: #fee2e2; /* red-100 */
+            border-color: #ef4444; /* red-500 */
+            color: #dc2626; /* red-600 */
+        }
+        .quiz-option.correct-answer-highlight {
+            background-color: #dcfce7; /* green-100 */
+            border-color: #22c55e; /* green-500 */
+        }
+        .funny-message {
+            font-size: 1.5rem; /* text-2xl */
+            margin-top: 1rem;
+            font-weight: 700;
+            color: #ff6347; /* Tomato */
+        }
+        .periodic-table-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+        }
+        .periodic-table-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 1200px;
+            height: 90%;
+            max-height: 800px;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+        }
+        .periodic-table-grid {
+            display: grid;
+            /* Grid template columns will be set by JS based on max X */
+            gap: 2px;
+            margin-top: 20px;
+        }
+        .element-cell {
+            border: 1px solid #ccc;
+            padding: 5px;
+            text-align: center;
+            font-size: 0.7rem;
+            background-color: #e0f2f7; /* Light blue */
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 50px;
+            transition: all 0.2s ease;
+        }
+        .element-cell:hover {
+            background-color: #b3e5fc;
+            transform: scale(1.05);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .element-symbol {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .element-name {
+            font-size: 0.6rem;
+            color: #555;
+        }
+        /* Specific group colors */
+        .alkali-metals { background-color: #ffcccb; } /* Light Red */
+        .alkaline-earth-metals { background-color: #ffedcc; } /* Light Orange */
+        .transition-metals { background-color: #ccedff; } /* Light Blue */
+        .metalloids { background-color: #ccffcc; } /* Light Green */
+        .nonmetals { background-color: #d9e7ff; } /* Lighter Blue */
+        .halogens { background-color: #e6ccff; } /* Light Purple */
+        .noble-gases { background-color: #ffccff; } /* Light Pink */
+        .lanthanides { background-color: #ffebcc; } /* Light Gold */
+        .actinides { background-color: #ebccff; } /* Light Lavender */
+        .post-transition-metals { background-color: #d6eaff; } /* Lighter Blue-ish */
+        .unknown-properties { background-color: #e6e6e6; } /* Light Gray */
+
+
+        .chatbot-container {
+            display: flex; /* Changed from none to flex, as modal parent handles visibility */
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            background-color: #f0f8ff;
+            border-radius: 1rem;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .chatbot-messages {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            border-bottom: 1px solid #e0e7ff;
+        }
+        .message {
+            margin-bottom: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .message.user {
+            background-color: #e0f7fa; /* Light cyan */
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .message.bot {
+            background-color: #fce4ec; /* Light pink */
+            align-self: flex-start;
+            margin-right: auto;
+        }
+        .chatbot-input-area {
+            display: flex;
+            padding: 1rem;
+            gap: 0.5rem;
+        }
+        .chatbot-input {
+            flex-grow: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #cbd5e1; /* slate-300 */
+            outline: none;
+            font-size: 1rem;
+        }
+        .chatbot-input:focus {
+            border-color: #3b82f6; /* blue-500 */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+        }
+        .chatbot-send-button {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+        }
+        .chatbot-send-button:hover {
+            background-color: #2563eb; /* blue-600 */
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .game-buttons-panel {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        .game-stats {
+            margin-bottom: 1.5rem;
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600;
+            color: #333;
+        }
+        .score-display, .level-display {
+            background-color: #e0f2f7;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            margin: 0 0.5rem;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Molecule Builder Styling */
+        .molecule-builder-container {
+            display: flex; /* Changed from none to flex, as modal parent handles visibility */
+            flex-direction: column;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 2rem;
+            border: 2px dashed #a78bfa; /* purple-400 */
+            border-radius: 1rem;
+            padding: 1.5rem;
+            background-color: #f5f3ff; /* purple-50 */
+        }
+        .atom-palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        .atom-chip {
+            background-color: #818cf8; /* indigo-400 */
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 9999px; /* full rounded */
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+            font-weight: 600;
+            font-size: 1.1rem;
+            user-select: none;
+        }
+        .atom-chip:hover {
+            transform: translateY(-3px) scale(1.05);
+            background-color: #6366f1; /* indigo-500 */
+        }
+        .molecule-target {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #4c51bf; /* indigo-700 */
+            margin-bottom: 1.5rem;
+        }
+        .build-area {
+            min-height: 150px;
+            border: 2px solid #a5b4fc; /* indigo-300 */
+            border-radius: 1rem;
+            background-color: #e0e7ff; /* indigo-100 */
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+        .built-atom {
+            background-color: #6366f1; /* indigo-500 */
+            color: white;
+            padding: 0.5rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 1rem;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .built-atom .remove-atom {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            visibility: hidden; /* Hidden by default */
+        }
+        .built-atom:hover .remove-atom {
+            visibility: visible; /* Show on hover */
+        }
+        .molecule-builder-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .builder-button {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .builder-button:hover {
+            background-color: #4338ca; /* indigo-700 */
+        }
+        .message-box {
+            /* FIX: Ensure this is hidden by default and only shown by JS */
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            /* Removed display: flex from here */
+            justify-content: center;
+            align-items: center;
+        }
+        .message-box-content {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+            transform: scale(0.9);
+            animation: pop-in 0.3s forwards;
+        }
+        @keyframes pop-in {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .message-box-content h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+            font-weight: bold;
+        }
+        .message-box-content p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: #555;
+        }
+        .message-box-button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.8rem 1.8rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .message-box-button:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        .user-id-display {
+            font-size: 0.9rem;
+            color: #fff;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 0.5rem;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="game-container">
+        <div class="header">
+            Chemistry Learning Adventure
+            <div id="userIdDisplay" class="user-id-display"></div>
+        </div>
+
+        <div id="loadingScreen" class="content-area absolute inset-0 bg-white flex flex-col items-center justify-center z-50 rounded-lg" style="display:none;">
+            <div class="loading-spinner w-12 h-12"></div>
+            <p class="mt-4 text-gray-700 text-lg">Loading game data...</p>
+        </div>
+
+        <div id="classSelectionScreen" class="content-area">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Select Your Class</h2>
+            <div class="class-selection-grid" id="classButtons">
+                <!-- Class buttons will be populated here by JavaScript -->
+            </div>
+        </div>
+
+        <div id="gameScreen" class="content-area hidden">
+            <div class="game-stats flex justify-center items-center mb-4">
+                <span class="score-display">Score: <span id="scoreValue">0</span></span>
+                <span class="level-display">Level: <span id="levelValue">1</span></span>
+                <span class="level-display">Class: <span id="classValue">N/A</span></span>
+            </div>
+            <h3 id="quizQuestion" class="text-xl font-semibold mb-6 text-gray-700"></h3>
+            <div id="quizOptions" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg mb-6">
+                <!-- Quiz options will be populated here -->
+            </div>
+            <p id="funnyMessage" class="funny-message hidden"></p>
+            <button id="nextQuestionButton" class="game-button bg-green-500 text-white hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 hidden">Next Question</button>
+
+            <div class="game-buttons-panel">
+                <button id="showPeriodicTableButton" class="game-button bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300">Periodic Table</button>
+                <button id="showChatbotButton" class="game-button bg-purple-500 text-white hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-300">Chatbot</button>
+                <button id="moleculeBuilderButton" class="game-button bg-indigo-500 text-white hover:bg-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-300">Molecule Builder</button>
+            </div>
+        </div>
+
+        <!-- Periodic Table Modal -->
+        <div id="periodicTableModal" class="periodic-table-modal">
+            <div class="periodic-table-content">
+                <span class="close-button" id="closePeriodicTableModal">&times;</span>
+                <h2 class="text-3xl font-bold text-gray-800 text-center mb-6">Periodic Table of Elements</h2>
+                <div id="periodicTableGrid" class="periodic-table-grid">
+                    <!-- Periodic table elements will be populated here by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Chatbot Modal -->
+        <div id="chatbotModal" class="periodic-table-modal">
+            <div class="periodic-table-content flex flex-col">
+                <span class="close-button" id="closeChatbotModal">&times;</span>
+                <h2 class="text-3xl font-bold text-gray-800 text-center mb-6">Chemistry Buddy Chatbot</h2>
+                <div class="chatbot-container flex-grow">
+                    <div id="chatbotMessages" class="chatbot-messages flex flex-col">
+                        <!-- Chat messages will appear here -->
+                    </div>
+                    <div class="loading-spinner" id="chatbotLoadingSpinner"></div>
+                    <div class="chatbot-input-area">
+                        <input type="text" id="chatbotInput" class="chatbot-input" placeholder="Ask me anything about chemistry or other subjects...">
+                        <button id="sendChatbotMessage" class="chatbot-send-button">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Molecule Builder Modal (Using the same modal structure for simplicity) -->
+        <div id="moleculeBuilderModal" class="periodic-table-modal">
+            <div class="periodic-table-content flex flex-col items-center">
+                <span class="close-button" id="closeMoleculeBuilderModal">&times;</span>
+                <h2 class="text-3xl font-bold text-gray-800 text-center mb-6">Molecule Builder</h2>
+                <p class="text-lg text-gray-600 mb-4">Drag atoms to the build area to create molecules!</p>
+
+                <div class="molecule-builder-container flex">
+                    <div class="molecule-target text-center">Build: <span id="targetMolecule">H₂O</span></div>
+                    <div class="atom-palette" id="atomPalette">
+                        <!-- Atom chips will be populated here -->
+                    </div>
+                    <div class="build-area" id="buildArea">
+                        <!-- Dragged atoms will appear here -->
+                    </div>
+                    <div class="molecule-builder-actions">
+                        <button id="checkMoleculeButton" class="builder-button bg-green-500 hover:bg-green-600">Check Molecule</button>
+                        <button id="resetBuilderButton" class="builder-button bg-red-500 hover:bg-red-600">Reset</button>
+                        <button id="nextMoleculeButton" class="builder-button bg-blue-500 hover:bg-blue-600">Next Molecule</button>
+                    </div>
+                    <p id="builderFeedback" class="text-lg font-semibold mt-4"></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Custom Message Box -->
+    <div id="messageBox" class="message-box">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxText"></p>
+            <button id="messageBoxButton" class="message-box-button">OK</button>
+        </div>
+    </div>
+
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, limit, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase global variables (provided by Canvas environment)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let userId = null;
+        let isAuthReady = false;
+
+        // Game State Variables
+        let currentClass = null;
+        let currentLevel = 1;
+        let score = 0;
+        let currentQuizQuestion = null;
+        let quizAttempts = 0; // To limit retries per question if needed, or for analytics
+        let askedQuestionHashes = []; // To store hashes of questions already asked
+
+        // Periodic Table Data (Complete with positions for accurate rendering)
+        const PERIODIC_TABLE_DATA = [
+            // Period 1
+            { "name": "Hydrogen", "symbol": "H", "atomic_number": 1, "group": "nonmetals", "x": 1, "y": 1 },
+            { "name": "Helium", "symbol": "He", "atomic_number": 2, "group": "noble-gases", "x": 18, "y": 1 },
+
+            // Period 2
+            { "name": "Lithium", "symbol": "Li", "atomic_number": 3, "group": "alkali-metals", "x": 1, "y": 2 },
+            { "name": "Beryllium", "symbol": "Be", "atomic_number": 4, "group": "alkaline-earth-metals", "x": 2, "y": 2 },
+            { "name": "Boron", "symbol": "B", "atomic_number": 5, "group": "metalloids", "x": 13, "y": 2 },
+            { "name": "Carbon", "symbol": "C", "atomic_number": 6, "group": "nonmetals", "x": 14, "y": 2 },
+            { "name": "Nitrogen", "symbol": "N", "atomic_number": 7, "group": "nonmetals", "x": 15, "y": 2 },
+            { "name": "Oxygen", "symbol": "O", "atomic_number": 8, "group": "nonmetals", "x": 16, "y": 2 },
+            { "name": "Fluorine", "symbol": "F", "atomic_number": 9, "group": "halogens", "x": 17, "y": 2 },
+            { "name": "Neon", "symbol": "Ne", "atomic_number": 10, "group": "noble-gases", "x": 18, "y": 2 },
+
+            // Period 3
+            { "name": "Sodium", "symbol": "Na", "atomic_number": 11, "group": "alkali-metals", "x": 1, "y": 3 },
+            { "name": "Magnesium", "symbol": "Mg", "atomic_number": 12, "group": "alkaline-earth-metals", "x": 2, "y": 3 },
+            { "name": "Aluminum", "symbol": "Al", "atomic_number": 13, "group": "post-transition-metals", "x": 13, "y": 3 },
+            { "name": "Silicon", "symbol": "Si", "atomic_number": 14, "group": "metalloids", "x": 14, "y": 3 },
+            { "name": "Phosphorus", "symbol": "P", "atomic_number": 15, "group": "nonmetals", "x": 15, "y": 3 },
+            { "name": "Sulfur", "symbol": "S", "atomic_number": 16, "group": "nonmetals", "x": 16, "y": 3 },
+            { "name": "Chlorine", "symbol": "Cl", "atomic_number": 17, "group": "halogens", "x": 17, "y": 3 },
+            { "name": "Argon", "symbol": "Ar", "atomic_number": 18, "group": "noble-gases", "x": 18, "y": 3 },
+
+            // Period 4
+            { "name": "Potassium", "symbol": "K", "atomic_number": 19, "group": "alkali-metals", "x": 1, "y": 4 },
+            { "name": "Calcium", "symbol": "Ca", "atomic_number": 20, "group": "alkaline-earth-metals", "x": 2, "y": 4 },
+            { "name": "Scandium", "symbol": "Sc", "atomic_number": 21, "group": "transition-metals", "x": 3, "y": 4 },
+            { "name": "Titanium", "symbol": "Ti", "atomic_number": 22, "group": "transition-metals", "x": 4, "y": 4 },
+            { "name": "Vanadium", "symbol": "V", "atomic_number": 23, "group": "transition-metals", "x": 5, "y": 4 },
+            { "name": "Chromium", "symbol": "Cr", "atomic_number": 24, "group": "transition-metals", "x": 6, "y": 4 },
+            { "name": "Manganese", "symbol": "Mn", "atomic_number": 25, "group": "transition-metals", "x": 7, "y": 4 },
+            { "name": "Iron", "symbol": "Fe", "atomic_number": 26, "group": "transition-metals", "x": 8, "y": 4 },
+            { "name": "Cobalt", "symbol": "Co", "atomic_number": 27, "group": "transition-metals", "x": 9, "y": 4 },
+            { "name": "Nickel", "symbol": "Ni", "atomic_number": 28, "group": "transition-metals", "x": 10, "y": 4 },
+            { "name": "Copper", "symbol": "Cu", "atomic_number": 29, "group": "transition-metals", "x": 11, "y": 4 },
+            { "name": "Zinc", "symbol": "Zn", "atomic_number": 30, "group": "transition-metals", "x": 12, "y": 4 },
+            { "name": "Gallium", "symbol": "Ga", "atomic_number": 31, "group": "post-transition-metals", "x": 13, "y": 4 },
+            { "name": "Germanium", "symbol": "Ge", "atomic_number": 32, "group": "metalloids", "x": 14, "y": 4 },
+            { "name": "Arsenic", "symbol": "As", "atomic_number": 33, "group": "metalloids", "x": 15, "y": 4 },
+            { "name": "Selenium", "symbol": "Se", "atomic_number": 34, "group": "nonmetals", "x": 16, "y": 4 },
+            { "name": "Bromine", "symbol": "Br", "atomic_number": 35, "group": "halogens", "x": 17, "y": 4 },
+            { "name": "Krypton", "symbol": "Kr", "atomic_number": 36, "group": "noble-gases", "x": 18, "y": 4 },
+
+            // Period 5
+            { "name": "Rubidium", "symbol": "Rb", "atomic_number": 37, "group": "alkali-metals", "x": 1, "y": 5 },
+            { "name": "Strontium", "symbol": "Sr", "atomic_number": 38, "group": "alkaline-earth-metals", "x": 2, "y": 5 },
+            { "name": "Yttrium", "symbol": "Y", "atomic_number": 39, "group": "transition-metals", "x": 3, "y": 5 },
+            { "name": "Zirconium", "symbol": "Zr", "atomic_number": 40, "group": "transition-metals", "x": 4, "y": 5 },
+            { "name": "Niobium", "symbol": "Nb", "atomic_number": 41, "group": "transition-metals", "x": 5, "y": 5 },
+            { "name": "Molybdenum", "symbol": "Mo", "atomic_number": 42, "group": "transition-metals", "x": 6, "y": 5 },
+            { "name": "Technetium", "symbol": "Tc", "atomic_number": 43, "group": "transition-metals", "x": 7, "y": 5 },
+            { "name": "Ruthenium", "symbol": "Ru", "atomic_number": 44, "group": "transition-metals", "x": 8, "y": 5 },
+            { "name": "Rhodium", "symbol": "Rh", "atomic_number": 45, "group": "transition-metals", "x": 9, "y": 5 },
+            { "name": "Palladium", "symbol": "Pd", "atomic_number": 46, "group": "transition-metals", "x": 10, "y": 5 },
+            { "name": "Silver", "symbol": "Ag", "atomic_number": 47, "group": "transition-metals", "x": 11, "y": 5 },
+            { "name": "Cadmium", "symbol": "Cd", "atomic_number": 48, "group": "transition-metals", "x": 12, "y": 5 },
+            { "name": "Indium", "symbol": "In", "atomic_number": 49, "group": "post-transition-metals", "x": 13, "y": 5 },
+            { "name": "Tin", "symbol": "Sn", "atomic_number": 50, "group": "post-transition-metals", "x": 14, "y": 5 },
+            { "name": "Antimony", "symbol": "Sb", "atomic_number": 51, "group": "metalloids", "x": 15, "y": 5 },
+            { "name": "Tellurium", "symbol": "Te", "atomic_number": 52, "group": "metalloids", "x": 16, "y": 5 },
+            { "name": "Iodine", "symbol": "I", "atomic_number": 53, "group": "halogens", "x": 17, "y": 5 },
+            { "name": "Xenon", "symbol": "Xe", "atomic_number": 54, "group": "noble-gases", "x": 18, "y": 5 },
+
+            // Period 6
+            { "name": "Cesium", "symbol": "Cs", "atomic_number": 55, "group": "alkali-metals", "x": 1, "y": 6 },
+            { "name": "Barium", "symbol": "Ba", "atomic_number": 56, "group": "alkaline-earth-metals", "x": 2, "y": 6 },
+            { "name": "Lanthanum", "symbol": "La", "atomic_number": 57, "group": "lanthanides", "x": 3, "y": 6 }, // Placeholder/start of Lanthanide series
+            { "name": "Hafnium", "symbol": "Hf", "atomic_number": 72, "group": "transition-metals", "x": 4, "y": 6 },
+            { "name": "Tantalum", "symbol": "Ta", "atomic_number": 73, "group": "transition-metals", "x": 5, "y": 6 },
+            { "name": "Tungsten", "symbol": "W", "atomic_number": 74, "group": "transition-metals", "x": 6, "y": 6 },
+            { "name": "Rhenium", "symbol": "Re", "atomic_number": 75, "group": "transition-metals", "x": 7, "y": 6 },
+            { "name": "Osmium", "symbol": "Os", "atomic_number": 76, "group": "transition-metals", "x": 8, "y": 6 },
+            { "name": "Iridium", "symbol": "Ir", "atomic_number": 77, "group": "transition-metals", "x": 9, "y": 6 },
+            { "name": "Platinum", "symbol": "Pt", "atomic_number": 78, "group": "transition-metals", "x": 10, "y": 6 },
+            { "name": "Gold", "symbol": "Au", "atomic_number": 79, "group": "transition-metals", "x": 11, "y": 6 },
+            { "name": "Mercury", "symbol": "Hg", "atomic_number": 80, "group": "transition-metals", "x": 12, "y": 6 },
+            { "name": "Thallium", "symbol": "Tl", "atomic_number": 81, "group": "post-transition-metals", "x": 13, "y": 6 },
+            { "name": "Lead", "symbol": "Pb", "atomic_number": 82, "group": "post-transition-metals", "x": 14, "y": 6 },
+            { "name": "Bismuth", "symbol": "Bi", "atomic_number": 83, "group": "post-transition-metals", "x": 15, "y": 6 },
+            { "name": "Polonium", "symbol": "Po", "atomic_number": 84, "group": "metalloids", "x": 16, "y": 6 },
+            { "name": "Astatine", "symbol": "At", "atomic_number": 85, "group": "halogens", "x": 17, "y": 6 },
+            { "name": "Radon", "symbol": "Rn", "atomic_number": 86, "group": "noble-gases", "x": 18, "y": 6 },
+
+            // Period 7
+            { "name": "Francium", "symbol": "Fr", "atomic_number": 87, "group": "alkali-metals", "x": 1, "y": 7 },
+            { "name": "Radium", "symbol": "Ra", "atomic_number": 88, "group": "alkaline-earth-metals", "x": 2, "y": 7 },
+            { "name": "Actinium", "symbol": "Ac", "atomic_number": 89, "group": "actinides", "x": 3, "y": 7 }, // Placeholder/start of Actinide series
+            { "name": "Rutherfordium", "symbol": "Rf", "atomic_number": 104, "group": "transition-metals", "x": 4, "y": 7 },
+            { "name": "Dubnium", "symbol": "Db", "atomic_number": 105, "group": "transition-metals", "x": 5, "y": 7 },
+            { "name": "Seaborgium", "symbol": "Sg", "atomic_number": 106, "group": "transition-metals", "x": 6, "y": 7 },
+            { "name": "Bohrium", "symbol": "Bh", "atomic_number": 107, "group": "transition-metals", "x": 7, "y": 7 },
+            { "name": "Hassium", "symbol": "Hs", "atomic_number": 108, "group": "transition-metals", "x": 8, "y": 7 },
+            { "name": "Meitnerium", "symbol": "Mt", "atomic_number": 109, "group": "unknown-properties", "x": 9, "y": 7 },
+            { "name": "Darmstadtium", "symbol": "Ds", "atomic_number": 110, "group": "unknown-properties", "x": 10, "y": 7 },
+            { "name": "Roentgenium", "symbol": "Rg", "atomic_number": 111, "group": "unknown-properties", "x": 11, "y": 7 },
+            { "name": "Copernicium", "symbol": "Cn", "atomic_number": 112, "group": "transition-metals", "x": 12, "y": 7 },
+            { "name": "Nihonium", "symbol": "Nh", "atomic_number": 113, "group": "unknown-properties", "x": 13, "y": 7 },
+            { "name": "Flerovium", "symbol": "Fl", "atomic_number": 114, "group": "unknown-properties", "x": 14, "y": 7 },
+            { "name": "Moscovium", "symbol": "Mc", "atomic_number": 115, "group": "unknown-properties", "x": 15, "y": 7 },
+            { "name": "Livermorium", "symbol": "Lv", "atomic_number": 116, "group": "unknown-properties", "x": 16, "y": 7 },
+            { "name": "Tennessine", "symbol": "Ts", "atomic_number": 117, "group": "unknown-properties", "x": 17, "y": 7 },
+            { "name": "Oganesson", "symbol": "Og", "atomic_number": 118, "group": "noble-gases", "x": 18, "y": 7 },
+
+            // Lanthanides (separate row, typically y=8 or adjusted)
+            // Note: Lanthanum (57) is included in Period 6 at (3,6)
+            { "name": "Cerium", "symbol": "Ce", "atomic_number": 58, "group": "lanthanides", "x": 4, "y": 8 },
+            { "name": "Praseodymium", "symbol": "Pr", "atomic_number": 59, "group": "lanthanides", "x": 5, "y": 8 },
+            { "name": "Neodymium", "symbol": "Nd", "atomic_number": 60, "group": "lanthanides", "x": 6, "y": 8 },
+            { "name": "Promethium", "symbol": "Pm", "atomic_number": 61, "group": "lanthanides", "x": 7, "y": 8 },
+            { "name": "Samarium", "symbol": "Sm", "atomic_number": 62, "group": "lanthanides", "x": 8, "y": 8 },
+            { "name": "Europium", "symbol": "Eu", "atomic_number": 63, "group": "lanthanides", "x": 9, "y": 8 },
+            { "name": "Gadolinium", "symbol": "Gd", "atomic_number": 64, "group": "lanthanides", "x": 10, "y": 8 },
+            { "name": "Terbium", "symbol": "Tb", "atomic_number": 65, "group": "lanthanides", "x": 11, "y": 8 },
+            { "name": "Dysprosium", "symbol": "Dy", "atomic_number": 66, "group": "lanthanides", "x": 12, "y": 8 },
+            { "name": "Holmium", "symbol": "Ho", "atomic_number": 67, "group": "lanthanides", "x": 13, "y": 8 },
+            { "name": "Erbium", "symbol": "Er", "atomic_number": 68, "group": "lanthanides", "x": 14, "y": 8 },
+            { "name": "Thulium", "symbol": "Tm", "atomic_number": 69, "group": "lanthanides", "x": 15, "y": 8 },
+            { "name": "Ytterbium", "symbol": "Yb", "atomic_number": 70, "group": "lanthanides", "x": 16, "y": 8 },
+            { "name": "Lutetium", "symbol": "Lu", "atomic_number": 71, "group": "lanthanides", "x": 17, "y": 8 },
+
+            // Actinides (separate row, typically y=9 or adjusted)
+            // Note: Actinium (89) is included in Period 7 at (3,7)
+            { "name": "Thorium", "symbol": "Th", "atomic_number": 90, "group": "actinides", "x": 4, "y": 9 },
+            { "name": "Protactinium", "symbol": "Pa", "atomic_number": 91, "group": "actinides", "x": 5, "y": 9 },
+            { "name": "Uranium", "symbol": "U", "atomic_number": 92, "group": "actinides", "x": 6, "y": 9 },
+            { "name": "Neptunium", "symbol": "Np", "atomic_number": 93, "group": "actinides", "x": 7, "y": 9 },
+            { "name": "Plutonium", "symbol": "Pu", "atomic_number": 94, "group": "actinides", "x": 8, "y": 9 },
+            { "name": "Americium", "symbol": "Am", "atomic_number": 95, "group": "actinides", "x": 9, "y": 9 },
+            { "name": "Curium", "symbol": "Cm", "atomic_number": 96, "group": "actinides", "x": 10, "y": 9 },
+            { "name": "Berkelium", "symbol": "Bk", "atomic_number": 97, "group": "actinides", "x": 11, "y": 9 },
+            { "name": "Californium", "symbol": "Cf", "atomic_number": 98, "group": "actinides", "x": 12, "y": 9 },
+            { "name": "Einsteinium", "symbol": "Es", "atomic_number": 99, "group": "actinides", "x": 13, "y": 9 },
+            { "name": "Fermium", "symbol": "Fm", "atomic_number": 100, "group": "actinides", "x": 14, "y": 9 },
+            { "name": "Mendelevium", "symbol": "Md", "atomic_number": 101, "group": "actinides", "x": 15, "y": 9 },
+            { "name": "Nobelium", "symbol": "No", "atomic_number": 102, "group": "actinides", "x": 16, "y": 9 },
+            { "name": "Lawrencium", "symbol": "Lr", "atomic_number": 103, "group": "actinides", "x": 17, "y": 9 }
+        ];
+
+        // Known molecules for molecule builder (symbol, count)
+        const MOLECULES = [
+            { name: "Water", formula: "H₂O", atoms: [{symbol: "H", count: 2}, {symbol: "O", count: 1}] },
+            { name: "Carbon Dioxide", formula: "CO₂", atoms: [{symbol: "C", count: 1}, {symbol: "O", count: 2}] },
+            { name: "Methane", formula: "CH₄", atoms: [{symbol: "C", count: 1}, {symbol: "H", count: 4}] },
+            { name: "Ammonia", formula: "NH₃", atoms: [{symbol: "N", count: 1}, {symbol: "H", count: 3}] },
+            { name: "Hydrogen Peroxide", formula: "H₂O₂", atoms: [{symbol: "H", count: 2}, {symbol: "O", count: 2}] },
+            { name: "Sulfuric Acid", formula: "H₂SO₄", atoms: [{symbol: "H", count: 2}, {symbol: "S", count: 1}, {symbol: "O", count: 4}] },
+            { name: "Ethane", formula: "C₂H₆", atoms: [{symbol: "C", count: 2}, {symbol: "H", count: 6}] },
+            { name: "Oxygen (molecule)", formula: "O₂", atoms: [{symbol: "O", count: 2}] },
+            { name: "Nitrogen (molecule)", formula: "N₂", atoms: [{symbol: "N", count: 2}] },
+            { name: "Chlorine (molecule)", formula: "Cl₂", atoms: [{symbol: "Cl", count: 2}] }
+        ];
+        let currentTargetMoleculeIndex = 0;
+        let builtAtoms = []; // [{ symbol: 'H', count: 1 }, { symbol: 'O', count: 1 }] format
+
+        // UI Elements
+        const classSelectionScreen = document.getElementById('classSelectionScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const classButtonsContainer = document.getElementById('classButtons');
+        const scoreValueSpan = document.getElementById('scoreValue');
+        const levelValueSpan = document.getElementById('levelValue');
+        const classValueSpan = document.getElementById('classValue');
+        const quizQuestionDiv = document.getElementById('quizQuestion');
+        const quizOptionsDiv = document.getElementById('quizOptions');
+        const funnyMessageP = document.getElementById('funnyMessage');
+        const nextQuestionButton = document.getElementById('nextQuestionButton');
+        const showPeriodicTableButton = document.getElementById('showPeriodicTableButton');
+        const periodicTableModal = document.getElementById('periodicTableModal');
+        const closePeriodicTableModalButton = document.getElementById('closePeriodicTableModal');
+        const periodicTableGrid = document.getElementById('periodicTableGrid');
+        const showChatbotButton = document.getElementById('showChatbotButton');
+        const chatbotModal = document.getElementById('chatbotModal');
+        const closeChatbotModalButton = document.getElementById('closeChatbotModal');
+        const chatbotMessagesDiv = document.getElementById('chatbotMessages');
+        const chatbotInput = document.getElementById('chatbotInput');
+        const sendChatbotMessageButton = document.getElementById('sendChatbotMessage');
+        const chatbotLoadingSpinner = document.getElementById('chatbotLoadingSpinner');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const moleculeBuilderButton = document.getElementById('moleculeBuilderButton');
+        const moleculeBuilderModal = document.getElementById('moleculeBuilderModal');
+        const closeMoleculeBuilderModalButton = document.getElementById('closeMoleculeBuilderModal');
+        const targetMoleculeSpan = document.getElementById('targetMolecule');
+        const atomPaletteDiv = document.getElementById('atomPalette');
+        const buildAreaDiv = document.getElementById('buildArea');
+        const checkMoleculeButton = document.getElementById('checkMoleculeButton');
+        const resetBuilderButton = document.getElementById('resetBuilderButton');
+        const nextMoleculeButton = document.getElementById('nextMoleculeButton');
+        const builderFeedbackP = document.getElementById('builderFeedback');
+
+        // Message Box Elements
+        const messageBox = document.getElementById('messageBox');
+        const messageBoxTitle = document.getElementById('messageBoxTitle');
+        const messageBoxText = document.getElementById('messageBoxText');
+        const messageBoxButton = document.getElementById('messageBoxButton');
+
+
+        /**
+         * Displays a custom message box instead of alert().
+         * @param {string} title The title of the message box.
+         * @param {string} message The content message.
+         * @returns {Promise<void>} A promise that resolves when the user clicks OK.
+         */
+        function showMessageBox(title, message) {
+            return new Promise((resolve) => {
+                messageBoxTitle.textContent = title;
+                messageBoxText.textContent = message;
+                messageBox.style.display = 'flex'; // Show the modal
+                messageBoxButton.onclick = () => {
+                    messageBox.style.display = 'none'; // Hide the modal
+                    resolve();
+                };
+            });
+        }
+
+        /**
+         * Authenticates the user with Firebase.
+         */
+        async function authenticateUser() {
+            loadingScreen.style.display = 'flex'; // Show loading screen
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdDisplay.textContent = `User ID: ${userId}`;
+                        isAuthReady = true;
+                        await loadUserData();
+                        populateClassSelection();
+                        loadingScreen.style.display = 'none'; // Hide loading screen
+                    } else {
+                        // Handle anonymous sign-in or other non-authenticated states
+                        // For this app, we ensure a user (anonymous or otherwise) is signed in.
+                        if (!userId) { // If userId isn't set, it means anonymous sign-in failed or wasn't tried.
+                            // This case should ideally not happen if signInAnonymously succeeds.
+                            // However, as a fallback, we can try to re-authenticate or generate a random ID
+                            // if Firestore rules allow read/write for non-authenticated users (which they don't here).
+                            // Given the rules, authentication is necessary.
+                            console.error("Authentication failed and no user ID could be established.");
+                            showMessageBox("Authentication Error", "Could not authenticate. Please try reloading the game.");
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase authentication error:", error);
+                loadingScreen.style.display = 'none'; // Hide loading screen
+                showMessageBox("Authentication Failed", `Failed to connect to the game server. Error: ${error.message}`);
+            }
+        }
+
+        /**
+         * Loads user data (class, level, score, asked questions) from Firestore.
+         */
+        async function loadUserData() {
+            if (!userId) {
+                console.warn("No user ID available to load data.");
+                return;
+            }
+            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/gameData`, 'progress');
+            try {
+                const docSnap = await getDoc(userDocRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    currentClass = data.class || null;
+                    currentLevel = data.level || 1;
+                    score = data.score || 0;
+                    askedQuestionHashes = data.askedQuestionHashes || [];
+                    console.log("User data loaded:", data);
+                } else {
+                    console.log("No existing user data found, initializing new data.");
+                    // Initialize with default values for new users
+                    await setDoc(userDocRef, {
+                        class: currentClass,
+                        level: currentLevel,
+                        score: score,
+                        askedQuestionHashes: askedQuestionHashes,
+                        lastPlayed: new Date()
+                    });
+                }
+                updateGameStatsDisplay();
+                if (currentClass) {
+                    showGameScreen();
+                } else {
+                    showClassSelectionScreen();
+                }
+            } catch (e) {
+                console.error("Error loading user data:", e);
+                showMessageBox("Data Load Error", `Failed to load your game progress. Error: ${e.message}`);
+            }
+        }
+
+        /**
+         * Saves current game data to Firestore.
+         */
+        async function saveUserData() {
+            if (!userId) {
+                console.warn("No user ID available to save data.");
+                return;
+            }
+            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/gameData`, 'progress');
+            try {
+                await setDoc(userDocRef, {
+                    class: currentClass,
+                    level: currentLevel,
+                    score: score,
+                    askedQuestionHashes: askedQuestionHashes,
+                    lastPlayed: new Date()
+                }, { merge: true }); // Use merge to avoid overwriting other fields if added later
+                console.log("User data saved successfully.");
+            } catch (e) {
+                console.error("Error saving user data:", e);
+                showMessageBox("Data Save Error", `Failed to save your game progress. Error: ${e.message}`);
+            }
+        }
+
+        /**
+         * Populates the class selection buttons (Class 1 to 12).
+         */
+        function populateClassSelection() {
+            classButtonsContainer.innerHTML = '';
+            for (let i = 1; i <= 12; i++) {
+                const button = document.createElement('button');
+                button.textContent = `Class ${i}`;
+                button.classList.add('class-button', 'bg-blue-500', 'text-white', 'hover:bg-blue-600', 'focus:outline-none', 'focus:ring-4', 'focus:ring-blue-300');
+                button.dataset.class = i;
+                button.addEventListener('click', () => selectClass(i));
+                classButtonsContainer.appendChild(button);
+            }
+        }
+
+        /**
+         * Selects a class and initializes the game.
+         * @param {number} selectedClass The chosen class.
+         */
+        async function selectClass(selectedClass) {
+            currentClass = selectedClass;
+            currentLevel = 1; // Reset level for new class
+            score = 0; // Reset score for new class
+            askedQuestionHashes = []; // Reset asked questions for new class
+            await saveUserData(); // Save initial class selection
+            showGameScreen();
+            updateGameStatsDisplay();
+            await getNewQuizQuestion();
+        }
+
+        /**
+         * Shows the class selection screen.
+         */
+        function showClassSelectionScreen() {
+            classSelectionScreen.classList.remove('hidden');
+            gameScreen.classList.add('hidden');
+            periodicTableModal.style.display = 'none';
+            chatbotModal.style.display = 'none';
+            moleculeBuilderModal.style.display = 'none';
+        }
+
+        /**
+         * Shows the main game screen.
+         */
+        function showGameScreen() {
+            classSelectionScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            periodicTableModal.style.display = 'none';
+            chatbotModal.style.display = 'none';
+            moleculeBuilderModal.style.display = 'none';
+        }
+
+        /**
+         * Updates the game stats display (score, level, class).
+         */
+        function updateGameStatsDisplay() {
+            scoreValueSpan.textContent = score;
+            levelValueSpan.textContent = currentLevel;
+            classValueSpan.textContent = currentClass || 'N/A';
+        }
+
+        /**
+         * Generates a unique hash for a question to prevent repetition.
+         * @param {object} question The question object.
+         * @returns {string} A simple hash string.
+         */
+        function generateQuestionHash(question) {
+            // A simple hash. For production, consider a more robust hashing algorithm.
+            return btoa(unescape(encodeURIComponent(question.question + question.options.join())));
+        }
+
+        /**
+         * Fetches a new chemistry quiz question from Gemini.
+         */
+        async function getNewQuizQuestion() {
+            if (!currentClass) {
+                showMessageBox("Game Error", "Please select a class first!");
+                return;
+            }
+
+            quizQuestionDiv.textContent = "Loading new question...";
+            quizOptionsDiv.innerHTML = '';
+            funnyMessageP.classList.add('hidden');
+            nextQuestionButton.classList.add('hidden');
+            quizOptionsDiv.classList.add('pointer-events-none'); // Disable clicks during loading
+
+            try {
+                // Construct a prompt that asks for a JSON response with specific fields
+                const prompt = `Generate a new, engaging chemistry multiple-choice question for Class ${currentClass}, Level ${currentLevel} students, based on NCERT syllabus. Ensure the question has not been asked before.
+                
+                Previous question hashes to avoid: ${askedQuestionHashes.slice(-10).join(', ')} (only last 10 for efficiency, but try to be unique)
+
+                Provide 4 options (A, B, C, D) and the single correct answer. Make the question slightly challenging but fair for the level.
+
+                Format the response as a JSON object with the following structure:
+                {
+                    "question": "The question text here...",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "answer": "Correct Answer"
+                }`;
+
+                const chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "question": { "type": "STRING" },
+                                "options": { "type": "ARRAY", "items": { "type": "STRING" } },
+                                "answer": { "type": "STRING" }
+                            },
+                            "propertyOrdering": ["question", "options", "answer"]
+                        }
+                    }
+                };
+
+                const apiKey = "AIzaSyBWtpf9PJNgapsVRl_wPryv3BTvmz_mhZc"; // Canvas will provide this.
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} - ${errorData.error.message || response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    const parsedQuestion = JSON.parse(jsonString);
+
+                    if (parsedQuestion && parsedQuestion.question && parsedQuestion.options && parsedQuestion.answer) {
+                        currentQuizQuestion = parsedQuestion;
+                        const questionHash = generateQuestionHash(currentQuizQuestion);
+
+                        // Basic check to prevent immediate repetition. For true uniqueness,
+                        // a more robust history check (e.g., against a larger set in Firestore) is needed.
+                        // For now, Gemini's prompt will handle uniqueness.
+                        askedQuestionHashes.push(questionHash);
+                        if (askedQuestionHashes.length > 100) { // Keep history manageable
+                            askedQuestionHashes.shift();
+                        }
+                        await saveUserData(); // Save updated question history
+
+                        displayQuizQuestion();
+                    } else {
+                        throw new Error("Invalid question format received from API.");
+                    }
+                } else {
+                    throw new Error("No valid response from API.");
+                }
+            } catch (error) {
+                console.error("Error fetching quiz question:", error);
+                quizQuestionDiv.textContent = "Failed to load question. Please try again.";
+                showMessageBox("Quiz Error", `Failed to get a new question. Error: ${error.message}`);
+            } finally {
+                quizOptionsDiv.classList.remove('pointer-events-none'); // Re-enable clicks
+            }
+        }
+
+        /**
+         * Displays the current quiz question and options.
+         */
+        function displayQuizQuestion() {
+            quizQuestionDiv.textContent = currentQuizQuestion.question;
+            quizOptionsDiv.innerHTML = ''; // Clear previous options
+            currentQuizQuestion.options.forEach((option, index) => {
+                const optionButton = document.createElement('button');
+                optionButton.textContent = `${String.fromCharCode(65 + index)}. ${option}`; // A, B, C, D
+                optionButton.classList.add('quiz-option', 'bg-gray-100', 'text-gray-800', 'border', 'border-gray-300', 'rounded-lg', 'py-3', 'px-5', 'text-left', 'w-full');
+                optionButton.dataset.answer = option; // Store the option text
+                optionButton.addEventListener('click', () => checkAnswer(optionButton, option));
+                quizOptionsDiv.appendChild(optionButton);
+            });
+        }
+
+        /**
+         * Checks the user's answer for the quiz.
+         * @param {HTMLElement} selectedButton The button element clicked by the user.
+         * @param {string} selectedAnswerText The text of the selected answer.
+         */
+        function checkAnswer(selectedButton, selectedAnswerText) {
+            // Disable all options after selection
+            Array.from(quizOptionsDiv.children).forEach(button => {
+                button.classList.add('pointer-events-none');
+                button.classList.remove('bg-gray-100', 'hover:bg-gray-200'); // Remove hover effect
+                // Highlight correct answer if incorrect choice was made
+                if (button.dataset.answer === currentQuizQuestion.answer && selectedAnswerText !== currentQuizQuestion.answer) {
+                    button.classList.add('correct-answer-highlight');
+                }
+            });
+
+            if (selectedAnswerText === currentQuizQuestion.answer) {
+                selectedButton.classList.add('correct');
+                score += 10;
+                currentLevel++; // Level up on correct answer
+                funnyMessageP.textContent = "Fantastic! You're a chemistry wizard! 🎉";
+            } else {
+                selectedButton.classList.add('incorrect');
+                score = Math.max(0, score - 5); // Deduct points, but not below zero
+                funnyMessageP.textContent = "Oops! Not quite. Keep learning, you'll get it next time! 🧪";
+            }
+            funnyMessageP.classList.remove('hidden');
+            nextQuestionButton.classList.remove('hidden');
+            updateGameStatsDisplay();
+            saveUserData(); // Save updated score/level
+        }
+
+        /**
+         * Fills the periodic table modal with elements.
+         */
+        function populatePeriodicTable() {
+            periodicTableGrid.innerHTML = ''; // Clear existing
+            const elementsMap = new Map(PERIODIC_TABLE_DATA.map(el => [el.atomic_number, el]));
+
+            // Determine maximum row and column for grid size
+            const maxRow = Math.max(...PERIODIC_TABLE_DATA.map(el => el.y));
+            const maxCol = Math.max(...PERIODIC_TABLE_DATA.map(el => el.x));
+
+            // Create a 2D array to represent the grid for easier placement
+            const grid = Array.from({ length: maxRow + 1 }, () => Array(maxCol + 1).fill(null));
+
+            // Place elements into the grid
+            PERIODIC_TABLE_DATA.forEach(element => {
+                grid[element.y][element.x] = element;
+            });
+
+            // Handle specific placeholder cells for Lanthanides/Actinides reference
+            // Adjusted coordinates to align with general table display
+            grid[6][3] = { "name": "Lanthanides", "symbol": "57-71", "atomic_number": null, "group": "lanthanides", "isPlaceholder": true };
+            grid[7][3] = { "name": "Actinides", "symbol": "89-103", "atomic_number": null, "group": "actinides", "isPlaceholder": true };
+
+
+            // Render the grid
+            // Set grid template columns and rows dynamically
+            periodicTableGrid.style.gridTemplateColumns = `repeat(${maxCol}, 1fr)`;
+            periodicTableGrid.style.gridTemplateRows = `repeat(${maxRow}, 1fr)`;
+
+
+            for (let r = 1; r <= maxRow; r++) { // Iterate through rows (y-coordinates)
+                for (let c = 1; c <= maxCol; c++) { // Iterate through columns (x-coordinates)
+                    const element = grid[r][c];
+                    const cell = document.createElement('div');
+                    cell.classList.add('element-cell');
+                    // Set grid position using CSS grid-column and grid-row
+                    cell.style.gridColumn = c;
+                    cell.style.gridRow = r;
+
+                    if (element) {
+                        cell.innerHTML = `
+                            <div class="font-light text-xs">${element.atomic_number || ''}</div>
+                            <div class="element-symbol">${element.symbol}</div>
+                            <div class="element-name">${element.name}</div>
+                        `;
+                        if (element.group) {
+                            cell.classList.add(element.group.replace(/\s+/g, '-').toLowerCase());
+                        }
+                        if (element.isPlaceholder) {
+                            cell.classList.add('bg-gray-200', 'font-bold', 'text-gray-600');
+                            cell.style.fontSize = '0.7rem'; // Adjust font size for placeholders
+                            cell.style.display = 'flex';
+                            cell.style.alignItems = 'center';
+                            cell.style.justifyContent = 'center';
+                        }
+                        periodicTableGrid.appendChild(cell);
+                    } else {
+                        // Create an empty cell for visual spacing in the grid
+                        const emptyCell = document.createElement('div');
+                        emptyCell.classList.add('element-cell', 'bg-gray-50', 'invisible'); // Invisible empty cells
+                        emptyCell.style.gridColumn = c;
+                        emptyCell.style.gridRow = r;
+                        periodicTableGrid.appendChild(emptyCell);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Fetches a response from the Gemini chatbot.
+         * @param {string} message The user's message.
+         */
+        async function getChatbotResponse(message) {
+            addChatMessage('user', message);
+            chatbotLoadingSpinner.style.display = 'block'; // Show loading spinner
+            sendChatbotMessageButton.disabled = true; // Disable send button
+
+            try {
+                const prompt = `You are a professional and concise AI assistant. Answer the following question briefly and accurately, regardless of subject: "${message}"`;
+                const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+
+                const payload = { contents: chatHistory };
+                const apiKey = "AIzaSyBWtpf9PJNgapsVRl_wPryv3BTvmz_mhZc"; // Canvas will provide this.
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} - ${errorData.error.message || response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const botResponse = result.candidates[0].content.parts[0].text;
+                    addChatMessage('bot', botResponse);
+                } else {
+                    addChatMessage('bot', "I'm sorry, I couldn't get a response. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error fetching chatbot response:", error);
+                addChatMessage('bot', `I'm having trouble connecting right now. Error: ${error.message}`);
+            } finally {
+                chatbotLoadingSpinner.style.display = 'none'; // Hide loading spinner
+                sendChatbotMessageButton.disabled = false; // Re-enable send button
+                chatbotMessagesDiv.scrollTop = chatbotMessagesDiv.scrollHeight; // Scroll to bottom
+            }
+        }
+
+        /**
+         * Adds a message to the chatbot's display.
+         * @param {'user' | 'bot'} sender The sender of the message.
+         * @param {string} text The message text.
+         */
+        function addChatMessage(sender, text) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender);
+            messageElement.textContent = text;
+            chatbotMessagesDiv.appendChild(messageElement);
+            chatbotMessagesDiv.scrollTop = chatbotMessagesDiv.scrollHeight; // Auto-scroll to latest message
+        }
+
+        // Event Listeners
+
+        // Periodic Table
+        showPeriodicTableButton.addEventListener('click', () => {
+            populatePeriodicTable(); // Ensure table is populated on click
+            periodicTableModal.style.display = 'flex';
+        });
+        closePeriodicTableModalButton.addEventListener('click', () => {
+            periodicTableModal.style.display = 'none';
+        });
+
+        // Chatbot
+        showChatbotButton.addEventListener('click', () => {
+            chatbotModal.style.display = 'flex';
+            chatbotMessagesDiv.scrollTop = chatbotMessagesDiv.scrollHeight; // Scroll to bottom on open
+        });
+        closeChatbotModalButton.addEventListener('click', () => {
+            chatbotModal.style.display = 'none';
+        });
+        sendChatbotMessageButton.addEventListener('click', () => {
+            const message = chatbotInput.value.trim();
+            if (message) {
+                getChatbotResponse(message);
+                chatbotInput.value = ''; // Clear input
+            }
+        });
+        chatbotInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendChatbotMessageButton.click();
+            }
+        });
+
+        // Quiz
+        nextQuestionButton.addEventListener('click', getNewQuizQuestion);
+
+        // Molecule Builder Functions
+        function populateAtomPalette() {
+            atomPaletteDiv.innerHTML = '';
+            // Example atoms; ideally, these would come from some data source
+            const availableAtoms = ["H", "C", "O", "N", "Cl", "Na", "S", "P", "F", "He", "Li", "B", "Ne", "Mg", "Al", "Si", "Ar", "K", "Ca", "Fe", "Cu", "Zn", "Br", "Kr", "I", "Xe"];
+            availableAtoms.forEach(atomSymbol => {
+                const atomChip = document.createElement('div');
+                atomChip.classList.add('atom-chip');
+                atomChip.textContent = atomSymbol;
+                atomChip.draggable = true; // Make it draggable
+                atomChip.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', atomSymbol);
+                });
+                atomPaletteDiv.appendChild(atomChip);
+            });
+        }
+
+        function displayTargetMolecule() {
+            const target = MOLECULES[currentTargetMoleculeIndex];
+            if (target) {
+                targetMoleculeSpan.innerHTML = target.formula.replace(/(\d+)/g, '<sub>$1</sub>');
+            } else {
+                targetMoleculeSpan.textContent = "N/A";
+                showMessageBox("Game Over", "You've built all the molecules! Great job!");
+                moleculeBuilderModal.style.display = 'none'; // Close builder after all molecules
+            }
+        }
+
+        function renderBuiltAtoms() {
+            buildAreaDiv.innerHTML = '';
+            builtAtoms.forEach((atom, index) => {
+                const builtAtomDiv = document.createElement('div');
+                builtAtomDiv.classList.add('built-atom');
+                builtAtomDiv.textContent = atom.symbol;
+                const removeButton = document.createElement('span');
+                removeButton.classList.add('remove-atom');
+                removeButton.textContent = 'x';
+                removeButton.addEventListener('click', () => removeAtomFromBuilder(index));
+                builtAtomDiv.appendChild(removeButton);
+                buildAreaDiv.appendChild(builtAtomDiv);
+            });
+        }
+
+        function addAtomToBuilder(symbol) {
+            // Allow choosing atoms many times
+            builtAtoms.push({ symbol: symbol, count: 1 }); // count is always 1 for individual atoms in this representation
+            renderBuiltAtoms();
+            builderFeedbackP.textContent = ''; // Clear feedback
+        }
+
+        function removeAtomFromBuilder(index) {
+            builtAtoms.splice(index, 1);
+            renderBuiltAtoms();
+            builderFeedbackP.textContent = ''; // Clear feedback
+        }
+
+        function checkMolecule() {
+            const target = MOLECULES[currentTargetMoleculeIndex];
+            if (!target) return;
+
+            // Create a map of built atoms for comparison
+            const builtMap = new Map();
+            builtAtoms.forEach(atom => {
+                builtMap.set(atom.symbol, (builtMap.get(atom.symbol) || 0) + atom.count);
+            });
+
+            // Create a map of target atoms
+            const targetMap = new Map();
+            target.atoms.forEach(atom => {
+                targetMap.set(atom.symbol, atom.count);
+            });
+
+            let isCorrect = true;
+            // Check if all target atoms are present in correct quantities
+            for (const [symbol, count] of targetMap.entries()) {
+                if (builtMap.get(symbol) !== count) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+
+            // Check if no extra atoms were added or if quantities differ for existing
+            if (builtMap.size !== targetMap.size) {
+                 isCorrect = false;
+            } else {
+                 for (const [symbol, count] of builtMap.entries()) {
+                     if (targetMap.get(symbol) !== count) {
+                         isCorrect = false;
+                         break;
+                     }
+                 }
+            }
+
+            if (isCorrect) {
+                builderFeedbackP.textContent = `Correct! You built ${target.name}! 🎉`;
+                builderFeedbackP.style.color = 'green';
+                score += 20; // Reward for building molecule
+                saveUserData();
+                updateGameStatsDisplay();
+                nextMoleculeButton.classList.remove('hidden'); // Show next molecule button
+            } else {
+                builderFeedbackP.textContent = `Incorrect. Try again for ${target.name}. �`;
+                builderFeedbackP.style.color = 'red';
+                nextMoleculeButton.classList.add('hidden'); // Hide next molecule button
+            }
+        }
+
+        function resetBuilder() {
+            builtAtoms = [];
+            renderBuiltAtoms();
+            builderFeedbackP.textContent = '';
+            nextMoleculeButton.classList.add('hidden'); // Hide next molecule button
+        }
+
+        function nextMolecule() {
+            currentTargetMoleculeIndex = (currentTargetMoleculeIndex + 1) % MOLECULES.length;
+            resetBuilder();
+            displayTargetMolecule();
+            nextMoleculeButton.classList.add('hidden'); // Hide next molecule button
+        }
+
+        // Molecule Builder Event Listeners
+        moleculeBuilderButton.addEventListener('click', () => {
+            populateAtomPalette();
+            displayTargetMolecule();
+            renderBuiltAtoms(); // Initial render for empty state
+            moleculeBuilderModal.style.display = 'flex';
+        });
+        closeMoleculeBuilderModalButton.addEventListener('click', () => {
+            moleculeBuilderModal.style.display = 'none';
+        });
+
+        // Allow dropping atoms into the build area
+        buildAreaDiv.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Allow drop
+        });
+        buildAreaDiv.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const symbol = e.dataTransfer.getData('text/plain');
+            if (symbol) {
+                addAtomToBuilder(symbol);
+            }
+        });
+
+        checkMoleculeButton.addEventListener('click', checkMolecule);
+        resetBuilderButton.addEventListener('click', resetBuilder);
+        nextMoleculeButton.addEventListener('click', nextMolecule);
+
+        // Initial setup
+        window.onload = authenticateUser;
+
+    </script>
+</body>
+</html>
